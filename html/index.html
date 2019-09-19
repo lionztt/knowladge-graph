@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>星战图谱可视化</title>
+    <meta name="description" content="" />
+    <meta name="keywords" content="" />
+    <meta name="author" content="" />
+    <link rel="shortcut icon" href="">
+<!--    <script src="http://cdn.bootcss.com/jquery/2.1.4/jquery.min.js"></script>-->
+    <link href="http://cdn.bootcss.com/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet">
+    <script src="http://cdn.bootcss.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+    <style>
+        body{
+            background-color: #272b30;
+            padding: 30px 40px;
+            text-align: center;
+            font-family: OpenSans-Light, PingFang SC, Hiragino Sans GB, Microsoft Yahei, Microsoft Jhenghei, sans-serif;
+        }
+        .title{
+            color: #fff;
+            font-size: 32px;
+            margin-bottom: 0;
+            text-align: left;
+            margin-left: 40px;
+        }
+        .relationship-box{
+            text-align:center;
+            position:relative;
+        }
+        #relationship-graph{
+            margin-left:80px;
+            margin-bottom:-40px;
+            width: 800px;
+            height: 500px;
+        }
+        .active{
+            border-top-right-radius:0;
+            border-bottom-right-radius:0;
+        }
+        #mode-text{
+            border-top-left-radius:0;
+            border-bottom-left-radius:0;
+            position:relative;
+            left:-5px;
+        }
+        .time-box{
+            text-align: center;
+            position: relative;
+        }
+        #time-graph{
+            width: 960px;
+            height: 240px;
+            margin-right: 60px;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="title">Star Wars</h1>
+    <div class="relationship-box">
+        <svg id="relationship-graph"></svg>
+        <div id="indicator">
+        </div>
+        <div id="mode">
+            <span class="active">Circles</span>
+            <span id="mode-text">Texts</span>
+        </div>
+        <div id="search">
+            <input type="text" class="form-control">
+        </div>
+        <div id="info">
+            <h4></h4>
+        </div>
+    </div>
+    <div class="time-box">
+        <svg id="time-graph">
+            <g></g>
+        </svg>
+    </div>
+</body>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="http://cdn.bootcss.com/jquery/2.1.4/jquery.min.js"></script>
+</html>
