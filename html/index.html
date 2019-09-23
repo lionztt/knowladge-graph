@@ -9,7 +9,7 @@
     <meta name="keywords" content="" />
     <meta name="author" content="" />
     <link rel="shortcut icon" href="">
-<!--    <script src="http://cdn.bootcss.com/jquery/2.1.4/jquery.min.js"></script>-->
+  <script src="http://cdn.bootcss.com/jquery/2.1.4/jquery.min.js"></script>
     <link href="http://cdn.bootcss.com/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet">
     <script src="http://cdn.bootcss.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
     <style>
@@ -33,18 +33,45 @@
         #relationship-graph{
             margin-left:80px;
             margin-bottom:-40px;
-            width: 800px;
-            height: 500px;
+            /*width: 800px;*/
+            /*height: 560px;*/
         }
         .active{
             border-top-right-radius:0;
             border-bottom-right-radius:0;
         }
+
+        #mode{
+            position: absolute;
+            top:160px;
+            left: 60px;
+        }
+        #mode span{
+            display: inline-block;
+            border: 1px solid #fff;
+            color: white;
+            padding: 6px 10px;
+            font-size: 14px;
+            transition: color,background-color .3s;
+            -o-transition: color,background-color .3s;
+            -moz-transition: color,background-color .3s;
+            -webkit-transition: color,background-color .3s;
+        }
+        #mode span:first-child{
+            border-radius: 4px 0 0 4px;
+        }
         #mode-text{
-            border-top-left-radius:0;
-            border-bottom-left-radius:0;
+            /*border-top-left-radius:0;!important;*/
+            /*border-bottom-left-radius:0;!important;*/
             position:relative;
+            border-radius: 0 4px 4px 0;
             left:-5px;
+        }
+
+        #mode span.active, #mode span:hover{
+            background-color: white;
+            color: #333;
+            cursor: pointer;
         }
         .time-box{
             text-align: center;
@@ -55,21 +82,52 @@
             height: 240px;
             margin-right: 60px;
         }
+        .links line {
+            stroke: rgb(240,240,240);
+            stroke-opacity: 0.2;
+        }
+        .nodes circle{
+            stroke: rgb(240,240,240);
+            stroke-opacity: 0.2;
+            stroke-width: 1.2px;
+        }
+        .texts text{
+            display: none;
+        }
+        #indicator{
+            position: absolute;
+            left: 60px;
+            bottom: 120px;
+            text-align: left;
+            color: #f2f2f2;
+            font-size: 12px;
+        }
+        #indicator>div{
+            margin-bottom: 4px;
+        }
+        #indicator span{
+            display: inline-block;
+            width: 30px;
+            height: 14px;
+            position: relative;
+            top:2px;
+            margin-right: 8px;
+        }
     </style>
 </head>
 <body>
     <h1 class="title">Star Wars</h1>
     <div class="relationship-box">
-        <svg id="relationship-graph"></svg>
+        <svg width="800" height="560" id="relationship-graph"></svg>
         <div id="indicator">
         </div>
         <div id="mode">
             <span class="active">Circles</span>
             <span id="mode-text">Texts</span>
         </div>
-        <div id="search">
-            <input type="text" class="form-control">
-        </div>
+<!--        <div id="search">-->
+<!--            <input type="text" class="form-control">-->
+<!--        </div>-->
         <div id="info">
             <h4></h4>
         </div>
@@ -82,4 +140,142 @@
 </body>
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script src="http://cdn.bootcss.com/jquery/2.1.4/jquery.min.js"></script>
+<script>
+    $(document).ready(function () {
+        var svg = d3.select("#relationship-graph"),
+            width = svg.attr('width'),
+            height = svg.attr('height');
+
+        var names = ['Films','Characters','planets','Starships','Vehicles','Species']
+
+        var color = d3.scaleOrdinal(d3.schemeCategory20);
+        var colors = ['#6ca46c','#4e88af','#ca635f','#d2907c','#d6744d','#ded295']
+
+        for(var i=0;i<names.length;i++){
+            $('#indicator').append("<div style='color: white'><span style='background-color: "+ colors[i]+"'></span>"+names[i]+"</div>")
+        }
+
+        // 使用d3生成关系图
+        var simulation = d3.forceSimulation()
+            .force("link", d3.forceLink().id(function(d) {
+                return d.id;
+            }))
+            .force("charge", d3.forceManyBody())
+            .force("center", d3.forceCenter(width / 2, height / 2));
+        var graph;
+
+        d3.json("starwar.json",function (error,data) {
+            if(error) throw error;
+                graph = data;
+                console.log(graph)
+
+            // 画线
+            var link = svg.append("g").attr("class","links").selectAll("line")
+                .data(graph.links).enter().append("line").attr("stroke-width"
+                    ,function (d) {
+                    return 1;
+            });
+
+            // 画圆
+            var node = svg.append("g").attr("class","nodes").selectAll("circle")
+                .data(graph.nodes).enter().append('circle').attr("r"
+                    ,function (d) {
+                        return d.size;
+                }).attr("fill",function (d) {
+                    return colors[d.group];
+                }).attr("stroke","none").attr("name",function (d) {
+                    return d.id;
+                }).call(d3.drag()
+                    .on("start",dragstarted)
+                    .on("drag",dragged)
+                    .on("end",dragended));
+
+            var text = svg.append("g").attr("class","texts").selectAll("text")
+                .data(graph.nodes).enter().append("text").attr("font-size"
+                    ,function (d) {
+                        return d.size;
+                }).attr("fill",function (d) {
+                    return colors[d.group];
+                }).attr("name",function (d) {
+                    return d.id;
+                }).text(function (d) {
+                    return d.id;
+                }).attr("text-anchor","middle").call(d3.drag()
+                    .on("start",dragstarted)
+                    .on("drag",dragged)
+                    .on("end",dragended));
+            node.append("tilte").text(function (d) {
+                return d.id;
+            })
+
+            // 数据初始化
+            simulation
+            .nodes(graph.nodes)
+            .on("tick", ticked);
+
+            simulation.force("link")
+                .links(graph.links);
+
+            function ticked() {
+                link
+                    .attr("x1", function(d) {
+                        return d.source.x;
+                    })
+                    .attr("y1", function(d) {
+                        return d.source.y;
+                    })
+                    .attr("x2", function(d) {
+                        return d.target.x;
+                    })
+                    .attr("y2", function(d) {
+                        return d.target.y;
+                    });
+                node
+                    .attr("cx", function(d) {
+                        return d.x;
+                    })
+                    .attr("cy", function(d) {
+                        return d.y;
+                    });
+                text
+                    .attr('transform', function(d) {
+                    return 'translate(' + d.x + ',' + (d.y + d.size / 2) + ')';
+                });
+            }
+        })
+        // 拖动事件
+        var dragging = false;
+        function dragstarted(d) {
+            if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+            dragging = true;
+        }
+        function dragged(d) {
+            d.fx = d3.event.x;
+            d.fy = d3.event.y;
+        }
+        function dragended(d) {
+            if (!d3.event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+            dragging = false;
+        }
+        
+        $('#mode span').click(function (e) {
+            $('#mode span').removeClass('active');
+            if ($(this).text() == 'Circles'){
+                $('#mode span:first-child').addClass('active')
+                $('.texts text').hide();
+                $('.nodes circle').show();
+            }else {
+                $('#mode #mode-text').addClass('active')
+                $('.texts text').show();
+                $('.nodes circle').hide();
+            }
+        });
+
+        $
+    })
+</script>
 </html>
