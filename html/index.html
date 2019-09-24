@@ -89,7 +89,13 @@
         .nodes circle{
             stroke: rgb(240,240,240);
             stroke-opacity: 0.2;
-            stroke-width: 1.2px;
+            stroke-width: 2px;
+        }
+        .nodes circle:hover{
+            cursor: pointer;
+        }
+        .nodes circle.inactive,.texts text.inactive,.links line.inactive{
+            display: none!important;
         }
         .texts text{
             display: none;
@@ -112,6 +118,22 @@
             position: relative;
             top:2px;
             margin-right: 8px;
+        }
+        #info{
+            position: absolute;
+            bottom: 40px;
+            right: 30px;
+            text-align: right;
+            width: 270px;
+        }
+        #info p{
+            color: #ffffff;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+        #info p span{
+            color: #888888;
+            margin-right: 10px;
         }
     </style>
 </head>
@@ -173,7 +195,7 @@
             var link = svg.append("g").attr("class","links").selectAll("line")
                 .data(graph.links).enter().append("line").attr("stroke-width"
                     ,function (d) {
-                    return 1;
+                        return 1;
             });
 
             // 画圆
@@ -183,9 +205,14 @@
                         return d.size;
                 }).attr("fill",function (d) {
                     return colors[d.group];
-                }).attr("stroke","none").attr("name",function (d) {
+                }).attr("stroke","none")
+                .attr("name",function (d) {
                     return d.id;
-                }).call(d3.drag()
+                })
+                .attr("title",function (d) {
+                    return d.id;
+                })
+                .call(d3.drag()
                     .on("start",dragstarted)
                     .on("drag",dragged)
                     .on("end",dragended));
@@ -204,7 +231,7 @@
                     .on("start",dragstarted)
                     .on("drag",dragged)
                     .on("end",dragended));
-            node.append("tilte").text(function (d) {
+            node.append("title").text(function (d) {
                 return d.id;
             })
 
@@ -275,7 +302,118 @@
             }
         });
 
-        $
+        // 获取定义好的节点详细信息
+        var info;
+        d3.json("all.json",function (error,data) {
+            info = data;
+        })
+
+        // 圆点鼠标悬浮事件
+        $("#relationship-graph").on('mouseenter','.nodes circle',function () {
+            if (!dragging){ // 没有拖动的情况下触发
+                var name = $(this).attr('name');
+
+                //详细信息
+                $('#info h4').css('color',$(this).attr('fill')).text(name);
+                $('#info p').remove();
+                for (var key in info[name]){
+                    // 不显示复杂的字段
+                    if(typeof (info[name][key])=='object'){
+                        continue;
+                    }
+                    // 筛选不要显示的字段
+                    if(key=='url'||key=='title'||key=='name'||key=='edited'
+                    ||key=='created'||key=='homeworld'){
+                        continue;
+                    }
+                    $('#info').append('<p><span>'+key+'</span>'+info[name][key]+'</p>');
+                }
+
+                // 显示该圆点相关点及线
+                d3.select("#relationship-graph .nodes").selectAll('circle').attr('class',function (d) {
+                    if (d.id == name){
+                        return '';
+                    }
+
+                    // 该点相关点要显示
+                    for (var i=0;i<graph.links.length;i++){
+                        if(graph.links[i]['source'].id==name&&graph.links[i]['target'].id==d.id){
+                            return ''
+                        }
+                        if(graph.links[i]['target'].id==name&&graph.links[i]['source'].id==d.id){
+                            return '';
+                        }
+                    }
+                    return 'inactive'
+                });
+                d3.select("#relationship-graph .links").selectAll('line').attr('class',function (d) {
+                    if (d.source.id == name||d.target.id == name){
+                        return '';
+                    }
+                    return 'inactive'
+                });
+            }
+        })
+
+        // 鼠标移出恢复圆点(移除class)
+        $("#relationship-graph").on('mouseleave','.nodes circle',function () {
+            if(!dragging){
+                d3.select("#relationship-graph .nodes").selectAll('circle').attr('class','')
+                d3.select("#relationship-graph .links").selectAll('line').attr('class','')
+            }
+        })
+
+
+         // 鼠标悬浮只显示该文字相关点及线
+        $("#relationship-graph").on('mouseenter','.texts text',function () {
+            if (!dragging){ // 没有拖动的情况下触发
+                var name = $(this).attr('name');
+
+                $('#info h4').css('color', $(this).attr('fill')).text(name);
+                $('#info p').remove();
+                for (var key in info[name]) {
+                    if (typeof(info[name][key]) == 'object') {
+                        continue;
+                    }
+                    if (key == 'url' || key == 'title' || key == 'name' || key == 'edited' || key == 'created' || key == 'homeworld') {
+                        continue;
+                    }
+                    $('#info').append('<p><span>' + key + '</span>' + info[name][key] + '</p>');
+                }
+
+                d3.select("#relationship-graph .texts").selectAll('text').attr('class',function (d) {
+                    if (d.id == name){
+                        return '';
+                    }
+                    // 该点相关点要显示
+                    for (var i=0;i<graph.links.length;i++){
+                        if(graph.links[i]['source'].id==name&&graph.links[i]['target'].id==d.id){
+                            return '';
+                        }
+                        if(graph.links[i]['target'].id==name&&graph.links[i]['source'].id==d.id){
+                            return '';
+                        }
+                    }
+                    return 'inactive';
+                });
+
+                d3.select("#relationship-graph .links").selectAll('line').attr('class',function (d) {
+                    if (d.source.id == name||d.target.id == name){
+                        return '';
+                    }
+                    return 'inactive'
+                });
+            }
+        })
+
+        // 鼠标移出恢复文字(移除class)
+        $("#relationship-graph").on('mouseleave','.texts text',function () {
+            if(!dragging){
+                d3.select("#relationship-graph .texts").selectAll('text').attr('class','')
+                d3.select("#relationship-graph .links").selectAll('line').attr('class','')
+            }
+        })
+
     })
 </script>
 </html>
