@@ -135,6 +135,17 @@
             color: #888888;
             margin-right: 10px;
         }
+        #search input{
+            position: absolute;
+            top: 220px;
+            left:60px;
+            color: white;
+            border: none;
+            outline: none;
+            box-shadow: none;
+            background-color: #666;
+            width: 200px;
+        }
     </style>
 </head>
 <body>
@@ -147,9 +158,9 @@
             <span class="active">Circles</span>
             <span id="mode-text">Texts</span>
         </div>
-<!--        <div id="search">-->
-<!--            <input type="text" class="form-control">-->
-<!--        </div>-->
+        <div id="search">
+            <input type="text" class="form-control">
+        </div>
         <div id="info">
             <h4></h4>
         </div>
@@ -414,6 +425,38 @@
             }
         })
 
+        // 搜索功能实现
+        $('#search input').keyup(function (event) {
+            if($(this).val()==''){
+                d3.select("#relationship-graph .texts").selectAll('text').attr('class','');
+                d3.select("#relationship-graph .nodes").selectAll('circle').attr('class','');
+                d3.select("#relationship-graph .links").selectAll('line').attr('class','');
+            }else{
+                var name =$(this).val();
+                d3.select('#relationship-graph .texts').selectAll('text').attr('class',function (d) {
+                    if(d.id!==undefined && d.id.toLowerCase().indexOf(name.toLowerCase())>=0){
+                        return ''
+                    }else {
+                        return 'inactive'
+                    }
+                })
+                // 线不显示
+                d3.select('#relationship-graph .links').selectAll('line').attr('class',function (d) {
+                    if(d.id!==undefined && d.id.toLowerCase().indexOf(name.toLowerCase())>=0){
+                        return ''
+                    }else {
+                        return 'inactive'
+                    }
+                })
+                d3.select('#relationship-graph .nodes').selectAll('circle').attr('class',function (d) {
+                    if(d.id!==undefined && d.id.toLowerCase().indexOf(name.toLowerCase())>=0){
+                        return ''
+                    }else {
+                        return 'inactive'
+                    }
+                })
+            }
+        })
     })
 </script>
 </html>
